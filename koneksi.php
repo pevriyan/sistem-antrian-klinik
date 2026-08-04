@@ -2,7 +2,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "";
-$db   = "antrian_klinik"; // Nama database kamu
+$db   = "db_klinik"; // Nama database kamu
 
 $conn = mysqli_connect($host, $user, $pass, $db);
 

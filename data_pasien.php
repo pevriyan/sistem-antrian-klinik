@@ -31,7 +31,7 @@ $query = mysqli_query($conn, "SELECT * FROM pasien ORDER BY tanggal_periksa DESC
                     <li class="nav-item"><a class="nav-link" href="dashboard.php">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="kelola_antrian.php">Kelola Antrian</a></li>
                     <li class="nav-item"><a class="nav-link active" href="data_pasien.php">Data Pasien</a></li>
-                    <li class="nav-item"><a class="nav-link" href="tentang.php">Tentang Klinik</a></li>
+                    <li class="nav-item"><a class="nav-link" href="tentang.php">Background Dokter</a></li>
                 </ul>
                 <a href="logout.php" class="btn btn-danger btn-sm fw-bold">Logout</a>
             </div>

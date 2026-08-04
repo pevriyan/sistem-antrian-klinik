@@ -48,7 +48,7 @@ $total_pasien = $q_pasien ? mysqli_fetch_assoc($q_pasien)['total'] : 0;
                     <li class="nav-item"><a class="nav-link active" href="dashboard.php">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="kelola_antrian.php">Kelola Antrian</a></li>
                     <li class="nav-item"><a class="nav-link" href="data_pasien.php">Data Pasien</a></li>
-                    <li class="nav-item"><a class="nav-link" href="tentang.php">Tentang Klinik</a></li>
+                    <li class="nav-item"><a class="nav-link" href="tentang.php">Background Dokter</a></li>
                 </ul>
                 <div class="d-flex align-items-center">
                     <span class="navbar-text text-white me-3">Halo, <strong><?php echo $_SESSION['username']; ?></strong>!</span>

@@ -28,7 +28,7 @@ if (!isset($_SESSION['status_login'])) { header("Location: index.php"); exit(); 
                     <li class="nav-item"><a class="nav-link" href="dashboard.php">Dashboard</a></li>
                     <li class="nav-item"><a class="nav-link" href="kelola_antrian.php">Kelola Antrian</a></li>
                     <li class="nav-item"><a class="nav-link" href="data_pasien.php">Data Pasien</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="tentang.php">Tentang Klinik</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="tentang.php">Backgorund Dokter</a></li>
                 </ul>
                 <a href="logout.php" class="btn btn-danger btn-sm fw-bold">Logout</a>
             </div>

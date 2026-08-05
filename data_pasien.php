@@ -3,6 +3,33 @@ session_start();
 if (!isset($_SESSION['status_login'])) { header("Location: index.php"); exit(); }
 include 'koneksi.php';
 
+// PROSES HAPUS DATA
+if (isset($_GET['hapus'])) {
+    $id = $_GET['hapus'];
+    mysqli_query($conn, "DELETE FROM pasien WHERE id_pasien = '$id'");
+    header("Location: data_pasien.php");
+    exit();
+}
+
+// PROSES EDIT / UPDATE DATA
+if (isset($_POST['update'])) {
+    $id             = $_POST['id_pasien'];
+    $nama_pasien    = $_POST['nama_pasien'];
+    $riwayat_sakit  = $_POST['riwayat_sakit'];
+    $jenis_penyakit = $_POST['jenis_penyakit'];
+    $tanggal_periksa= $_POST['tanggal_periksa'];
+
+    mysqli_query($conn, "UPDATE pasien SET 
+        nama_pasien = '$nama_pasien', 
+        riwayat_sakit = '$riwayat_sakit', 
+        jenis_penyakit = '$jenis_penyakit', 
+        tanggal_periksa = '$tanggal_periksa' 
+        WHERE id_pasien = '$id'");
+    
+    header("Location: data_pasien.php");
+    exit();
+}
+
 $query = mysqli_query($conn, "SELECT * FROM pasien ORDER BY tanggal_periksa DESC");
 ?>
 
@@ -49,7 +76,7 @@ $query = mysqli_query($conn, "SELECT * FROM pasien ORDER BY tanggal_periksa DESC
             </div>
 
             <div class="table-responsive">
-                <table class="table table-hover table-bordered bg-white">
+                <table class="table table-hover table-bordered bg-white align-middle">
                     <thead class="table-primary text-center">
                         <tr>
                             <th>No</th>
@@ -57,6 +84,7 @@ $query = mysqli_query($conn, "SELECT * FROM pasien ORDER BY tanggal_periksa DESC
                             <th>History Sakit (Keluhan)</th>
                             <th>Jenis Penyakit (Diagnosa)</th>
                             <th>Tanggal Periksa</th>
+                            <th>Aksi (CRUD)</th>
                         </tr>
                     </thead>
                     <tbody id="tabelPasien">
@@ -67,7 +95,51 @@ $query = mysqli_query($conn, "SELECT * FROM pasien ORDER BY tanggal_periksa DESC
                             <td><?php echo $row['riwayat_sakit']; ?></td>
                             <td class="text-center"><span class="badge bg-danger rounded-pill px-3 py-2"><?php echo $row['jenis_penyakit']; ?></span></td>
                             <td class="text-center"><?php echo $row['tanggal_periksa']; ?></td>
+                            <td class="text-center">
+                                <!-- Tombol Trigger Modal Edit -->
+                                <button class="btn btn-warning btn-sm fw-bold text-white" data-bs-toggle="modal" data-bs-target="#editModal<?php echo $row['id_pasien']; ?>">Edit</button>
+                                <!-- Tombol Hapus -->
+                                <a href="data_pasien.php?hapus=<?php echo $row['id_pasien']; ?>" class="btn btn-danger btn-sm fw-bold" onclick="return confirm('Yakin ingin menghapus data pasien ini?')">Hapus</a>
+                            </td>
                         </tr>
+
+                        <!-- Modal Edit untuk setiap baris data -->
+                        <div class="modal fade" id="editModal<?php echo $row['id_pasien']; ?>" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST">
+                                        <div class="modal-header bg-primary text-white">
+                                            <h5 class="modal-title">Edit Data Pasien</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-content p-3 border-0">
+                                            <input type="hidden" name="id_pasien" value="<?php echo $row['id_pasien']; ?>">
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Nama Pasien</label>
+                                                <input type="text" class="form-control" name="nama_pasien" value="<?php echo $row['nama_pasien']; ?>" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">History Sakit (Keluhan)</label>
+                                                <textarea class="form-control" name="riwayat_sakit" rows="2" required><?php echo $row['riwayat_sakit']; ?></textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Jenis Penyakit (Diagnosa)</label>
+                                                <input type="text" class="form-control" name="jenis_penyakit" value="<?php echo $row['jenis_penyakit']; ?>" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Tanggal Periksa</label>
+                                                <input type="date" class="form-control" name="tanggal_periksa" value="<?php echo $row['tanggal_periksa']; ?>" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" name="update" class="btn btn-primary fw-bold">Simpan Perubahan</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                         <?php endwhile; ?>
                     </tbody>
                 </table>
@@ -75,6 +147,8 @@ $query = mysqli_query($conn, "SELECT * FROM pasien ORDER BY tanggal_periksa DESC
         </div>
     </div>
 
+    <!-- Bootstrap JS (Dibutuhkan agar Modal berfungsi) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('inputPencarian').addEventListener('keyup', function() {
             let filter = this.value.toLowerCase();

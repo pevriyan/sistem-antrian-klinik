@@ -5,7 +5,7 @@ include 'koneksi.php';
 
 $tgl = date('Y-m-d');
 
-// 1. CREATE
+// 1. CREATE ANTRIAN BARU
 if (isset($_POST['tambah_antrian'])) {
     $nama = $_POST['nama_pasien'];
     $q_max = mysqli_query($conn, "SELECT MAX(nomor_antrian) as max_nomor FROM antrian WHERE tanggal='$tgl'");
@@ -17,7 +17,25 @@ if (isset($_POST['tambah_antrian'])) {
     exit();
 }
 
-// 2. UPDATE & DELETE
+// 2. PROSES SELESAI PEMERIKSAAN & SIMPAN KE TABEL PASIEN
+if (isset($_POST['simpan_pemeriksaan'])) {
+    $id_antrian     = $_POST['id_antrian'];
+    $nama_pasien    = $_POST['nama_pasien'];
+    $riwayat_sakit  = $_POST['riwayat_sakit'];
+    $jenis_penyakit = $_POST['jenis_penyakit'];
+    $tanggal_periksa = $tgl;
+
+    // Simpan ke tabel pasien agar muncul di halaman Data Pasien
+    mysqli_query($conn, "INSERT INTO pasien (nama_pasien, riwayat_sakit, jenis_penyakit, tanggal_periksa) VALUES ('$nama_pasien', '$riwayat_sakit', '$jenis_penyakit', '$tanggal_periksa')");
+
+    // Ubah status antrian menjadi selesai
+    mysqli_query($conn, "UPDATE antrian SET status='selesai' WHERE id_antrian='$id_antrian'");
+
+    header("Location: kelola_antrian.php");
+    exit();
+}
+
+// 3. UPDATE STATUS & DELETE
 if (isset($_GET['aksi']) && isset($_GET['id'])) {
     $id = $_GET['id'];
     $aksi = $_GET['aksi'];
@@ -25,8 +43,6 @@ if (isset($_GET['aksi']) && isset($_GET['id'])) {
     if ($aksi == 'panggil') {
         mysqli_query($conn, "UPDATE antrian SET status='selesai' WHERE status='dipanggil' AND tanggal='$tgl'");
         mysqli_query($conn, "UPDATE antrian SET status='dipanggil' WHERE id_antrian='$id'");
-    } elseif ($aksi == 'selesai') {
-        mysqli_query($conn, "UPDATE antrian SET status='selesai' WHERE id_antrian='$id'");
     } elseif ($aksi == 'hapus') {
         mysqli_query($conn, "DELETE FROM antrian WHERE id_antrian='$id'");
     }
@@ -54,19 +70,17 @@ $data_antrian = mysqli_query($conn, "SELECT * FROM antrian WHERE tanggal='$tgl' 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { 
-            /* Dominan putih bersih dengan sapuan biru muda (Light Blue RGB) */
             background: linear-gradient(-45deg, #ffffff, #f0f8ff, #ffffff, #e1f5fe);
             background-size: 400% 400%;
             animation: gerakGradient 15s ease infinite;
             min-height: 100vh;
         }
-        
         @keyframes gerakGradient { 
             0% { background-position: 0% 50%; } 
             50% { background-position: 100% 50%; } 
             100% { background-position: 0% 50%; } 
         }
-        
+        .konten-kaca { background: rgba(255, 255, 255, 0.95); border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -144,12 +158,46 @@ $data_antrian = mysqli_query($conn, "SELECT * FROM antrian WHERE tanggal='$tgl' 
                                         <?php if($row['status'] == 'menunggu'): ?>
                                             <button onclick="panggilLangsung(<?php echo $row['id_antrian']; ?>, '<?php echo $nomor_format; ?>', '<?php echo htmlspecialchars($row['nama_pasien'], ENT_QUOTES); ?>')" class="btn btn-sm btn-success fw-bold">📢 Panggil</button>
                                         <?php elseif($row['status'] == 'dipanggil'): ?>
-                                            <a href="kelola_antrian.php?aksi=selesai&id=<?php echo $row['id_antrian']; ?>" class="btn btn-sm btn-secondary fw-bold">✔️ Selesai</a>
+                                            <!-- Tombol Selesai yang memicu Modal Input Diagnosa -->
+                                            <button class="btn btn-sm btn-secondary fw-bold" data-bs-toggle="modal" data-bs-target="#selesaiModal<?php echo $row['id_antrian']; ?>">✔️ Selesai</button>
                                         <?php endif; ?>
                                         
                                         <a href="kelola_antrian.php?aksi=hapus&id=<?php echo $row['id_antrian']; ?>" class="btn btn-sm btn-danger fw-bold ms-1" onclick="return confirm('Batal?')">🗑️ Batal</a>
                                     </td>
                                 </tr>
+
+                                <!-- MODAL INPUT DIAGNOSA KETIKA KLIK SELESAI -->
+                                <div class="modal fade" id="selesaiModal<?php echo $row['id_antrian']; ?>" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content text-start">
+                                            <form method="POST">
+                                                <div class="modal-header bg-success text-white">
+                                                    <h5 class="modal-title">Pemeriksaan Selesai - <?php echo $row['nama_pasien']; ?></h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <input type="hidden" name="id_antrian" value="<?php echo $row['id_antrian']; ?>">
+                                                    <input type="hidden" name="nama_pasien" value="<?php echo htmlspecialchars($row['nama_pasien']); ?>">
+                                                    
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">History Sakit (Keluhan)</label>
+                                                        <textarea class="form-control" name="riwayat_sakit" rows="3" placeholder="Masukkan keluhan pasien..." required></textarea>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Jenis Penyakit (Diagnosa)</label>
+                                                        <input type="text" class="form-control" name="jenis_penyakit" placeholder="Contoh: Asam Urat, Hipertensi, dll..." required>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" name="simpan_pemeriksaan" class="btn btn-success fw-bold">Simpan & Masuk ke Data Pasien</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- AKHIR MODAL -->
+
                                 <?php endwhile; } else { echo "<tr><td colspan='4' class='text-muted py-4'>Belum ada antrian.</td></tr>"; } ?>
                             </tbody>
                         </table>
@@ -159,50 +207,43 @@ $data_antrian = mysqli_query($conn, "SELECT * FROM antrian WHERE tanggal='$tgl' 
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Memuat daftar suara (voices) ke browser terlebih dahulu
         window.speechSynthesis.onvoiceschanged = function() {
             window.speechSynthesis.getVoices();
         };
 
         function panggilLangsung(id_pasien, no_antrian, nama_pasien) {
-    document.getElementById('angka-dipanggil').innerText = "🔊...";
-    
-    // Ambil huruf depan, misalnya "A"
-    let huruf = no_antrian.charAt(0);
-    
-    // Ambil sisa angkanya saja, misalnya "003" (tanpa diubah jadi angka murni)
-    let angkaString = no_antrian.substring(1); 
-    
-    // Pisahkan "003" menjadi "0, 0, 3" agar dieja satu-satu oleh robot
-    let angkaDieja = angkaString.split('').join(', ');
-    
-    // (Opsional) Ubah pembacaan angka "0" menjadi "kosong" agar lebih natural di telinga orang Indonesia
-    angkaDieja = angkaDieja.replace(/0/g, 'kosong');
-    
-    const teksPanggilan = `Nomor antrian, ${huruf}, ${angkaDieja}, atas nama, ${nama_pasien}. Silakan menuju ke ruangan dokter Jasmine.`;
-    
-    let speech = new SpeechSynthesisUtterance(teksPanggilan);
-    speech.lang = 'id-ID'; 
-    speech.rate = 0.9;     
-    
-    let voices = window.speechSynthesis.getVoices();
-    let voiceIndo = voices.find(voice => voice.lang === 'id-ID' || voice.lang === 'id_ID');
-    let femaleIndo = voices.find(voice => (voice.lang === 'id-ID' || voice.lang === 'id_ID') && !voice.name.toLowerCase().includes('male'));
-    
-    if (femaleIndo) {
-        speech.voice = femaleIndo;
-    } else if (voiceIndo) {
-        speech.voice = voiceIndo; 
-    }
-    
-    speech.onend = function() {
-        window.location.href = "kelola_antrian.php?aksi=panggil&id=" + id_pasien;
-    };
-    
-    window.speechSynthesis.speak(speech);
-}
-        
+            document.getElementById('angka-dipanggil').innerText = "🔊...";
+            
+            let huruf = no_antrian.charAt(0);
+            let angkaString = no_antrian.substring(1); 
+            let angkaDieja = angkaString.split('').join(', ');
+            angkaDieja = angkaDieja.replace(/0/g, 'kosong');
+            
+            const teksPanggilan = `Nomor antrian, ${huruf}, ${angkaDieja}, atas nama, ${nama_pasien}. Silakan menuju ke ruangan dokter Jasmine.`;
+            
+            let speech = new SpeechSynthesisUtterance(teksPanggilan);
+            speech.lang = 'id-ID'; 
+            speech.rate = 0.9;     
+            
+            let voices = window.speechSynthesis.getVoices();
+            let voiceIndo = voices.find(voice => voice.lang === 'id-ID' || voice.lang === 'id_ID');
+            let femaleIndo = voices.find(voice => (voice.lang === 'id-ID' || voice.lang === 'id_ID') && !voice.name.toLowerCase().includes('male'));
+            
+            if (femaleIndo) {
+                speech.voice = femaleIndo;
+            } else if (voiceIndo) {
+                speech.voice = voiceIndo; 
+            }
+            
+            speech.onend = function() {
+                window.location.href = "kelola_antrian.php?aksi=panggil&id=" + id_pasien;
+            };
+            
+            window.speechSynthesis.speak(speech);
+        }
     </script>
 </body>
 </html>
